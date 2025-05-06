@@ -8,5 +8,8 @@ public class Main {
         // реализуйте алгоритм здесь
         UserService userService = new UserServiceImpl();
         userService.createUsersTable();
+//        userService.saveUser("Alesha", "Larkov", (byte) 30);
+        userService.removeUserById(1L);
+//        userService.dropUsersTable();
     }
 }
