@@ -1,5 +1,7 @@
 package jm.task.core.jdbc.service;
 
+import jm.task.core.jdbc.dao.UserDao;
+import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 
@@ -9,55 +11,34 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class UserServiceImpl implements UserService {
+    UserDao dao = new UserDaoJDBCImpl();
+
     public void createUsersTable() {
-        String sql = "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR, last_name VARCHAR, age smallint)";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        dao.createUsersTable();
+        System.out.println("Таблица users создана!");
     }
 
     public void dropUsersTable() {
-        String sql = "DROP TABLE users";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.execute();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        dao.dropUsersTable();
+        System.out.println("Таблица users удалена!");
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        String sql = "INSERT INTO users (name, last_name, age) VALUES (?, ?, ?)";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, name);
-            statement.setString(2, lastName);
-            statement.setByte(3, age);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        dao.saveUser(name, lastName, age);
+        System.out.printf("User с именем - %s добавлен в базу данных\n", name);
     }
 
     public void removeUserById(long id) {
-        String sql = "DELETE FROM users WHERE id=?";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setLong(1, id);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        dao.removeUserById(id);
+        System.out.printf("User с id - %d удален из базы данных\n", id);
     }
 
     public List<User> getAllUsers() {
-        return null;
+        return dao.getAllUsers();
     }
 
     public void cleanUsersTable() {
-
+        dao.cleanUsersTable();
+        System.out.println("Таблица users очищена!");
     }
 }
