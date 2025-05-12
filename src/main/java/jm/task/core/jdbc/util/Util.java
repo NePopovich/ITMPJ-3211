@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Util {
+
     private static final Properties PROPERTIES = new Properties();
 
     static {

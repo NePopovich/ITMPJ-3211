@@ -1,5 +1,8 @@
 package jm.task.core.jdbc;
 
+import jm.task.core.jdbc.dao.UserDao;
+import jm.task.core.jdbc.dao.UserDaoHibernateImpl;
+import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.service.UserService;
 import jm.task.core.jdbc.service.UserServiceImpl;
@@ -9,14 +12,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    private static final Logger logger = Logger.getLogger("Task");
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
 
-        UserService userService = getUserService();
+        UserService userService = getUserService(new UserDaoJDBCImpl());
         userService.createUsersTable();
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             User user = createUser();
             userService.saveUser(user.getName(), user.getLastName(), user.getAge());
         }
@@ -27,8 +30,8 @@ public class Main {
         userService.dropUsersTable();
     }
 
-    private static UserService getUserService(){
-        return new UserServiceImpl();
+    private static UserService getUserService(UserDao dao){
+        return new UserServiceImpl(dao);
     }
 
     private static User createUser() {

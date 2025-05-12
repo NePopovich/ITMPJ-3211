@@ -1,75 +1,82 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Constants;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class UserDaoHibernateImpl implements UserDao {
-    private final SessionFactory sessionFactory = Util.getSessionFactory();
+
+    private static final SessionFactory sessionFactory = Util.getSessionFactory();
 
     public UserDaoHibernateImpl() {
-
     }
-
 
     @Override
     public void createUsersTable() {
-        String sql = "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR, last_name VARCHAR, age smallint)";
-        Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        session.createNativeQuery(sql).executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+        noReturnAction(session -> session.createNativeQuery(Constants.createUsersTableSQL).executeUpdate());
     }
 
     @Override
     public void dropUsersTable() {
-        String sql = "DROP TABLE IF EXISTS users";
-        Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        session.createNativeQuery(sql).executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+        noReturnAction(session -> session.createNativeQuery(Constants.dropUsersTableSQL).executeUpdate());
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        session.save(new User(name, lastName, age));
-        session.getTransaction().commit();
-        session.close();
+        noReturnAction(session -> session.save(new User(name, lastName, age)));
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        session.delete(session.get(User.class, id));
-        session.getTransaction().commit();
-        session.close();
+        noReturnAction(session -> session.delete(session.get(User.class, id)));
     }
 
     @Override
     public List<User> getAllUsers() {
-        Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        List<User> list = session.createQuery("from User").getResultList();
-        session.getTransaction().commit();
-        session.close();
-        return list;
+        return returnAction(session -> session.createQuery("from User").getResultList());
     }
 
     @Override
     public void cleanUsersTable() {
-        String sql = "DELETE FROM users";
+        noReturnAction(session -> session.createNativeQuery(Constants.cleanUsersTableSQL));
+    }
+
+    private static void noReturnAction(Consumer<Session> action) {
         Session session = sessionFactory.getCurrentSession();
-        session.beginTransaction();
-        session.createNativeQuery(sql).executeUpdate();
-        session.getTransaction().commit();
-        session.close();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            action.accept(session);
+            transaction.commit();
+        } catch (Exception e) {
+            transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+    }
+
+    private static <T> T returnAction(Function<Session, T> action) {
+        Session session = sessionFactory.getCurrentSession();
+        Transaction transaction = null;
+        T result = null;
+        try {
+            transaction = session.beginTransaction();
+            result = action.apply(session);
+            transaction.commit();
+        } catch (Exception e) {
+            transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            session.close();
+        }
+        return result;
     }
 }

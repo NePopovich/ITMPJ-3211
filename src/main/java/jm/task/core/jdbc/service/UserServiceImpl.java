@@ -10,28 +10,37 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class UserServiceImpl implements UserService {
-    UserDao dao = new UserDaoHibernateImpl();
+
+    private final Logger logger = Logger.getLogger(UserServiceImpl.class.getName());
+    private final UserDao dao;
+
+    public UserServiceImpl(UserDao dao) {
+        this.dao = dao;
+    }
 
     public void createUsersTable() {
         dao.createUsersTable();
-        System.out.println("Таблица users создана!");
+        logger.severe("Таблица users создана!");
     }
 
     public void dropUsersTable() {
         dao.dropUsersTable();
-        System.out.println("Таблица users удалена!");
+        logger.severe("Таблица users удалена!");
     }
 
     public void saveUser(String name, String lastName, byte age) {
         dao.saveUser(name, lastName, age);
-        System.out.printf("User с именем - %s добавлен в базу данных\n", name);
+        String msg = "User с именем - " + name + " добавлен в базу данных";
+        logger.severe(msg);
     }
 
     public void removeUserById(long id) {
         dao.removeUserById(id);
-        System.out.printf("User с id - %d удален из базы данных\n", id);
+        String msg = "User с id - " + id + " удален из базы данных";
+        logger.severe(msg);
     }
 
     public List<User> getAllUsers() {
@@ -40,6 +49,6 @@ public class UserServiceImpl implements UserService {
 
     public void cleanUsersTable() {
         dao.cleanUsersTable();
-        System.out.println("Таблица users очищена!");
+        logger.severe("Таблица users очищена!");
     }
 }
