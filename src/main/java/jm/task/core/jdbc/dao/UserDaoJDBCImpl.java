@@ -1,6 +1,7 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Constants;
 import jm.task.core.jdbc.util.Util;
 
 import java.sql.Connection;
@@ -11,60 +12,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
-    public UserDaoJDBCImpl() {
 
+    public UserDaoJDBCImpl() {
     }
 
     public void createUsersTable() {
-        String sql = "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR, last_name VARCHAR, age smallint)";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        onlyDoSQL(Constants.createUsersTableSQL);
     }
 
     public void dropUsersTable() {
-        String sql = "DROP TABLE users";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.execute();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        onlyDoSQL(Constants.dropUsersTableSQL);
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        String sql = "INSERT INTO users (name, last_name, age) VALUES (?, ?, ?)";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, name);
-            statement.setString(2, lastName);
-            statement.setByte(3, age);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        onlyDoSQL(Constants.insertUsersInTableSQL, name, lastName, age);
     }
 
     public void removeUserById(long id) {
-        String sql = "DELETE FROM users WHERE id=?";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setLong(1, id);
-            statement.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        onlyDoSQL(Constants.deleteUserByIdSQL, id);
     }
 
     public List<User> getAllUsers() {
         List<User> result = new ArrayList<>();
-        String sql = "SELECT * FROM users";
-        try (Connection connection = Util.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
+        ResultSet resultSet = doSQLWithReturn(Constants.selectAllUsersSQL);
+        try {
             while (resultSet.next()) {
                 User user = new User(
                         resultSet.getString("name"),
@@ -73,19 +44,43 @@ public class UserDaoJDBCImpl implements UserDao {
                 );
                 result.add(user);
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return result;
     }
 
     public void cleanUsersTable() {
-        String sql = "DELETE FROM users";
+        onlyDoSQL(Constants.cleanUsersTableSQL);
+    }
+
+    private static void onlyDoSQL(String sql, Object... param) {
         try (Connection connection = Util.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(sql);
+            if (param != null) {
+                for (int i = 0; i < param.length; i++) {
+                    statement.setObject(i + 1, param[i]);
+                }
+            }
             statement.executeUpdate();
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    private static ResultSet doSQLWithReturn(String sql, Object... param) {
+        ResultSet res = null;
+        try (Connection connection = Util.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(sql);
+            if (param != null) {
+                for (int i = 0; i < param.length; i++) {
+                    statement.setObject(i + 1, param[i]);
+                }
+            }
+            res = statement.executeQuery();
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return res;
     }
 }
